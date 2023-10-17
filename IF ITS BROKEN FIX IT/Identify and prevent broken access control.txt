@@ -145,3 +145,132 @@ app.run(host='0.0.0.0', port=8181)
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+* Exploiting An Insecure Direct Object Reference Vulnerability
+--------------------------------------------------------------
+Now that we understand how the code is supposed to work let’s take a look at what’s actually happening.
+
+Let’s log in and validate that the protected endpoints are protected.
+
+Let’s leverage the user1 account.
+
+* Instructions
+--------------
+Log in with the username,user1, and the password, password1.
+
+Once logged in, you’ll be informed that you’ve been granted access to the user account. Next, the page should redirect you to a new page with the following message: “Welcome user1! Your 
+secret phrase is My S3cret Phrase”.
+
+The end result of logging in should be the following URL:
+
+https://localhost/account_secret_phrase?id=1&session=7c6a180b36896a0a8c02787eeafb0e4c
+
+Let’s see what happens if we change the URL’s id value from 1 to 2.
+
+What is returned?
+
+Access Denied. This means that the application is correctly leveraging the validate_request function in the Python code.
+
+Hm, since we’re authenticated as “user1”, let us change our current endpoint in the URL, account_secret_phrase, to the endpoint /account_password?id=1. The new URL should be the following:
+
+https://localhost/account_password?id=1&session=7c6a180b36896a0a8c02787eeafb0e4c
+
+When we do this, we should see the following string: “Welcome user1! Your password hash is 7c6a180b36896a0a8c02787eeafb0e4c”
+
+Let’s try the same thing before and change the URL’sid to 2.
+
+Uh oh! We didn’t receive the “Access Denied” message this time. Rather, we can see the other user’s password hash!
+
+This is an example of an Insecure Direct Object Reference, known as IDOR for short. IDOR vulnerabilities are an incredibly common example of broken access controls. Due to a lack of 
+proper validation, this class of vulnerability allows attackers to access potentially sensitive data directly. Depending on the application, this type of vulnerability can take many forms. An attacker can access sensitive data via a basic number, as we have here, a file name, a GUID value, or some other unique identifier. While some identifiers, such as a GUID, are random enough to be difficult to guess and, therefore, access, some, like basic numbers and filenames, may be easily guessable and accessible.
+
+Now that we understand where the vulnerability exists, let’s fix our code in the next exercise.
+
+app.py
+------
+from flask import Flask
+from flask import request
+from flask import make_response
+import subprocess
+
+import hashlib
+
+app = Flask(__name__)
+
+# user1 password is password1
+creds = {'1':['user1','7c6a180b36896a0a8c02787eeafb0e4c','My S3cret Phrase'], '2':['admin','ad58e137c3c6180ffae010bd11bb2f6b','P3rson@l Phrase']}
+
+def validate_request(session,requested_asset):
+    if session == creds[requested_asset][1]:
+        return 'Valid'
+    else:
+    	return 'Not Valid'
+
+
+@app.route('/')
+def index():
+    return '''
+        <b>WELCOME TO THE IDOR ACCOUNT SYSTEM</b>
+	<form action="/login" method="GET">
+	  <label for="Username">Username:</label><br>
+	  <input type="text" id="username" name="username" value="username"><br>
+	  <label for="Password">Password:</label><br>
+	  <input type="text" id="password" name="password" value="password"><br><br>
+	  <input type="submit" value="Submit">
+	</form> 
+	'''
+	
+#Protected
+@app.route('/account_secret_phrase', methods=['GET'])
+def account_secret_phrase():
+    id_val = request.args.get('id')
+    session = request.args.get('session')
+    if validate_request(session,id_val) == 'Valid':
+    	return "Welcome " + creds[id_val][0] + "!\nYour secret phrase is " + creds[id_val][2]
+    else:
+    	return "Access Denied"
+
+#Protected
+@app.route('/account_password', methods=['GET'])
+def account_page_password():
+    id_val = request.args.get('id')
+    session = request.args.get('session')
+    if validate_request(session,id_val):
+    	return "Welcome " + creds[id_val][0] + "!\nYour password hash is " + creds[id_val][1]
+    else:
+    	return "Access Denied"
+
+#Public
+@app.route('/account_user', methods=['GET'])
+def account_page_username():
+    id_val = request.args.get('id')
+    return "Welcome " + creds[id_val][0] + "!\The username is " + creds[id_val][0]
+
+@app.route('/login', methods=['GET'])
+def login():
+    user = request.args.get('username')
+    password = request.args.get('password')
+    password = hashlib.md5(password.encode())
+    password = password.hexdigest()
+    print(user + " " + password)
+    for cred in creds:
+        user_stored = creds[cred][0]
+        print(user_stored)
+        password_stored = creds[cred][1]
+        print(password_stored)
+        if user_stored == user:
+            if password_stored == password:
+                resp = make_response()
+                resp.set_cookie("session",password)
+                return "Access Granted. If you aren't automatically redirected, <a href=/account_secret_phrase?id=" + cred + "&session=" +password+">click here!</a>"
+            else:
+                return "Login Failed"
+        else:
+            return "Login Failed"
+    return "Login Failed"
+
+
+app.run(host='0.0.0.0', port=8181)
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
