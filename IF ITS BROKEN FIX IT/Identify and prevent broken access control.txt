@@ -1,0 +1,20 @@
+# IDENTIFY AND PREVENT BROKEN ACCESS CONTROL
+--------------------------------------------
+
+* Broken Access Controls
+------------------------
+In our modern era, applications are becoming increasingly more robust, dynamic, and complex. Given the increased complexity, it is only natural that vulnerabilities will find their way 
+into our applications. However, as developers, we must ensure we are vigilant against any issues.
+
+One common addition found within most modern applications is the ability to provide users with access to persistent information directly related to their activity. In many applications, 
+developers will implement accounts to provide a manner for users to control and maintain data on the application. Of course, while this may sound simple, adding accounts and private 
+information introduces various challenges and vulnerabilities to the application.
+
+This short lesson will explore a small application demonstrating a basic example of broken access controls. In this lesson, we’ll be able to learn the following:
+
+	. Review our code for potential access control vulnerabilities.
+	. Validate the existence of these vulnerabilities via active exploitation.
+	. Remediate our code and remove the vulnerability.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
