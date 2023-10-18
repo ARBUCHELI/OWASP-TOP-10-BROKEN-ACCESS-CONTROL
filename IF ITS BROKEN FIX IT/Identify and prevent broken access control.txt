@@ -397,4 +397,16 @@ app.run(host='0.0.0.0', port=8181)
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+* Conclusion
+------------
+As mentioned, applications are becoming increasingly more robust, dynamic, and complex in our modern era. Given the increased complexity, it is only natural that vulnerabilities will find 
+their way into our applications. However, as developers, we must ensure we are vigilant against any issues.
+
+This short lesson explored a small application demonstrating a basic example of broken access controls. We’ve done the following:
+
+	. Reviewed our code for potential access control vulnerabilities.
+	. Validated the existence of these vulnerabilities via active exploitation.
+	. Remediated our code and removed the vulnerability.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
